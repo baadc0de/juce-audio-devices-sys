@@ -49,8 +49,8 @@ mod sys {
         pub(crate) fn stop_devices() -> ();
         pub(crate) fn activate_device(
             driver: *const libc::c_char,
-            output_name: *const libc::c_char,
             input_name: *const libc::c_char,
+            output_name: *const libc::c_char,
             input_channels: i32,
             output_channels: i32,
             sample_rate: f64,
@@ -77,14 +77,14 @@ pub fn stop_devices() -> () {
 
 pub fn activate_device(
     driver: &str,
-    output_name: &str,
     input_name: &str,
+    output_name: &str,
     input_channels: usize,
     output_channels: usize,
     sample_rate: usize,
     buffer_size: usize,
     f: Box<dyn Fn(&[&[f32]], &mut [&mut [f32]], usize) -> () + Send + Sync>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<i32, Box<dyn Error>> {
     let id = {
         let mut clients = sys::CLIENTS.write().expect("write");
         clients.push(f);
@@ -94,8 +94,8 @@ pub fn activate_device(
     match unsafe {
         sys::activate_device(
             CString::new(driver)?.as_ptr(),
-            CString::new(output_name)?.as_ptr(),
             CString::new(input_name)?.as_ptr(),
+            CString::new(output_name)?.as_ptr(),
             input_channels as i32,
             output_channels as i32,
             sample_rate as f64,
@@ -104,20 +104,19 @@ pub fn activate_device(
             sys::callback,
         )
     } {
-        0 => Ok(()),
         ERR_NO_DRIVER => Err(format!("Driver {} could not be loaded", driver).into()),
         ERR_NO_DEVICE => Err(format!(
             "Input device {} or output device {} could not be created",
             input_name, output_name
         )
-            .into()),
+        .into()),
         ERR_MGR_CONSTRUCT => Err("Device manager failed to construct".into()),
         ERR_DEV_CONSTRUCT => Err(format!(
-            "Device {} or output device {} could not be constructed",
+            "Input device {} or output device {} could not be constructed",
             input_name, output_name
         )
-            .into()),
-        i => Err(format!("unknown result {}", i).into()),
+        .into()),
+        _ => Ok(i),
     }
 }
 
@@ -138,8 +137,8 @@ mod test {
     fn laptop_test() {
         assert!(activate_device(
             "CoreAudio",
-            "Built-in Output",
             "Built-in Microphone",
+            "Built-in Output",
             1,
             2,
             48000,

@@ -70,9 +70,14 @@ struct AudioDevice : public AudioIODeviceCallback {
 
 static vector<AudioDevice> devices;
 static unique_ptr<AudioDeviceManager> mgr;
+static vector<string> already_scanned;
 
-int __unused activate_device(const char *driver, const char *output_name, const char *input_name, int input_channels,
-                             int output_channels, double sample_rate, int buffer_size, int ctx,
+int __unused activate_device(const char *driver, const char *input_name, const char *output_name,
+                             int input_channels,
+                             int output_channels,
+                             double sample_rate,
+                             int buffer_size,
+                             int ctx,
                              DevIOCallback callback) {
     try {
         if (!mgr) {
@@ -84,7 +89,11 @@ int __unused activate_device(const char *driver, const char *output_name, const 
 
     for (auto dev_type : mgr->getAvailableDeviceTypes()) {
         if (dev_type->getTypeName() == driver) {
-            dev_type->scanForDevices();
+            if (find(already_scanned.begin(), already_scanned.end(), driver) != already_scanned.end()) {
+                dev_type->scanForDevices();
+                already_scanned.emplace_back(driver);
+            }
+
             try {
                 auto *dev_raw = dev_type->createDevice(output_name, input_name);
                 if (!dev_raw) {
