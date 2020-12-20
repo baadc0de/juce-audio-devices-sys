@@ -70,12 +70,12 @@ fn get_devices() -> usize {
     unsafe { sys::get_devices() }
 }
 
-fn stop_devices() -> () {
+pub fn stop_devices() -> () {
     unsafe { sys::stop_devices() }
     sys::CLIENTS.write().expect("write").clear();
 }
 
-fn activate_device(
+pub fn activate_device(
     driver: &str,
     output_name: &str,
     input_name: &str,
