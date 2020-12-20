@@ -116,7 +116,7 @@ pub fn activate_device(
             input_name, output_name
         )
         .into()),
-        _ => Ok(i),
+        i => Ok(i),
     }
 }
 
