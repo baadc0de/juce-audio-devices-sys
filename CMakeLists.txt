@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
 add_subdirectory(JUCE)
 
 project(JUCE_SYS VERSION 0.0.1)
