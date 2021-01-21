@@ -7,12 +7,12 @@ using namespace std;
 using namespace juce;
 
 extern "C" {
-size_t __unused get_devices() {
+size_t  get_devices() {
     AudioDeviceManager mgr;
     size_t i = 0;
     for (auto dev_type : mgr.getAvailableDeviceTypes()) {
         std::cout << dev_type->getTypeName() << std::endl;
-        for (auto dev : dev_type->getDeviceNames()) {
+        for (const auto& dev : dev_type->getDeviceNames()) {
             std::cout << dev_type->getTypeName() << ": " << dev.toStdString() << std::endl;
             i++;
         }
@@ -72,7 +72,7 @@ static vector<AudioDevice> devices;
 static unique_ptr<AudioDeviceManager> mgr;
 static vector<string> already_scanned;
 
-int __unused activate_device(const char *driver, const char *input_name, const char *output_name,
+int activate_device(const char *driver, const char *input_name, const char *output_name,
                              int input_channels,
                              int output_channels,
                              double sample_rate,
@@ -81,7 +81,7 @@ int __unused activate_device(const char *driver, const char *input_name, const c
                              DevIOCallback callback) {
     try {
         if (!mgr) {
-            mgr.reset(new AudioDeviceManager());
+            mgr = std::make_unique<AudioDeviceManager>();
         }
     } catch (...) {
         return ERR_MGR_CONSTRUCT;

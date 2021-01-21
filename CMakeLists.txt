@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.15)
 
 add_subdirectory(JUCE)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build, options are: Debug, Release, or MinSizeRel." FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE not set, defaulting to Debug.")
+endif()
+
 project(JUCE_SYS VERSION 0.0.1)
 
 add_library(JuceRustBindings STATIC)
@@ -9,6 +14,8 @@ add_library(JuceRustBindings STATIC)
 target_sources(JuceRustBindings
         PRIVATE
         src/bindings.cpp)
+
+target_include_directories(JuceRustBindings PUBLIC $ENV{CPAL_ASIO_DIR}\\common)
 
 target_compile_definitions(JuceRustBindings
         PUBLIC
@@ -18,7 +25,8 @@ target_compile_definitions(JuceRustBindings
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_USE_SSE_INTRINSICS=0
-        JUCE_STANDALONE_APPLICATION=1)
+        JUCE_STANDALONE_APPLICATION=1
+        JUCE_ASIO=1)
 
 target_link_libraries(JuceRustBindings
         PRIVATE

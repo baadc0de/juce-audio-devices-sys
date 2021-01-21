@@ -5,4 +5,4 @@ app termination.
 
 It also has no API to enumerate devices, so you need to know their names upfront.
 
-Windows/ASIO support TBD.
+For ASIO support on Windows, define CPAL_ASIO_DIR with path to Steinbergs ASIO directory. This will be #if'd under a feature at some point.
