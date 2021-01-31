@@ -7,13 +7,13 @@ mod sys {
     use lazy_static::lazy_static;
 
     lazy_static! {
-        pub(crate) static ref CLIENTS: RwLock<Vec<Box<dyn Fn(&[&[f32]], &mut [&mut [f32]], usize) -> () + Send + Sync>>> =
+        pub(crate) static ref CLIENTS: RwLock<Vec<Box<dyn Fn(&mut [&mut [f32]], &mut [&mut [f32]], usize) -> () + Send + Sync>>> =
             RwLock::new(vec![]);
     }
 
     pub(crate) extern "C" fn callback(
         ctx: i32,
-        inputs: *const *const f32,
+        inputs: *mut *mut f32,
         num_inputs: i32,
         outputs: *mut *mut f32,
         num_outputs: i32,
@@ -24,10 +24,10 @@ mod sys {
             let num_outputs = num_outputs as usize;
             let num_samples = num_samples as usize;
 
-            let mut inputs_as_slices: [&[f32]; 128] = std::mem::zeroed();
+            let mut inputs_as_slices: [&mut [f32]; 128] = std::mem::zeroed();
             for i in 0..num_inputs {
                 inputs_as_slices[i] =
-                    std::slice::from_raw_parts(*inputs.offset(i as isize), num_samples);
+                    std::slice::from_raw_parts_mut(*inputs.offset(i as isize), num_samples);
             }
             let mut outputs_as_slices: [&mut [f32]; 128] = std::mem::zeroed();
             for i in 0..num_outputs {
@@ -36,7 +36,7 @@ mod sys {
             }
 
             CLIENTS.read().expect("read")[ctx as usize](
-                &inputs_as_slices[..num_inputs],
+                &mut inputs_as_slices[..num_inputs],
                 &mut outputs_as_slices[..num_outputs],
                 num_samples,
             );
@@ -56,7 +56,7 @@ mod sys {
             sample_rate: f64,
             buffer_size: i32,
             target: i32,
-            callback: extern "C" fn(i32, *const *const f32, i32, *mut *mut f32, i32, i32),
+            callback: extern "C" fn(i32, *mut *mut f32, i32, *mut *mut f32, i32, i32),
         ) -> i32;
     }
 }
@@ -83,7 +83,7 @@ pub fn activate_device(
     output_channels: usize,
     sample_rate: usize,
     buffer_size: usize,
-    f: Box<dyn Fn(&[&[f32]], &mut [&mut [f32]], usize) -> () + Send + Sync>,
+    f: Box<dyn Fn(&mut [&mut [f32]], &mut [&mut [f32]], usize) -> () + Send + Sync>,
 ) -> Result<i32, Box<dyn Error>> {
     let id = {
         let mut clients = sys::CLIENTS.write().expect("write");
